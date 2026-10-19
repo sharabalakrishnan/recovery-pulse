@@ -1,5 +1,7 @@
 """Home: what the app is for, with links to each screen."""
 
+import html
+
 import streamlit as st
 
 from pulse import scoring
@@ -10,11 +12,12 @@ PAGES: dict = {}   # filled in by app.py
 
 TILES = [
     ("checkin", "For residents", "Check in",
-     "Six quick questions about support, trust and day-to-day strain. No name, no account."),
+     "Six quick questions about support, trust and day-to-day strain. No name, no account.", "Start check-in →"),
     ("dash", "For organizers", "Community pulse",
-     "Connection by neighborhood and week, the strains piling up, and the help people ask for most."),
+     "Connection scores by neighborhood and week, the strains piling up, and the help people ask for most.",
+     "Open the pulse →"),
     ("help", "Right now", "Get help",
-     "Disaster aid, food, rides and someone to talk to, any time of day."),
+     "Disaster aid, rides, food and someone to talk to, any time of day.", "See resources →"),
 ]
 
 
@@ -27,24 +30,27 @@ def render():
         "one-minute anonymous check-in that shows organizers which neighborhoods feel most cut off and what would help.",
     )
     cols = st.columns(3, gap="medium")
-    for col, (key, kicker, title, body) in zip(cols, TILES):
+    for col, (key, kicker, title, body, link) in zip(cols, TILES):
         with col, st.container(border=True):
             st.markdown(f'<div class="tc-card tc-tile-kicker">{kicker}</div>'
                         f'<div class="tc-tile-title">{title}</div><div class="tc-tile-body">{body}</div>',
                         unsafe_allow_html=True)
             if key in PAGES:
-                st.page_link(PAGES[key], label="Open")
+                st.page_link(PAGES[key], label=link)
 
     df = scored()
     if df.empty:
         return
     s = scoring.summary(df)
-    st.write("")
-    c = st.columns(3, gap="medium")
-    stats = [
-        (f"{s['n']:,}", f"check-ins over {s['weeks']} weeks"),
-        (s["lowest"] or "—", f"feels least connected (score {s['lowest_score']:.0f} of 100)" if s["lowest"] else "not enough check-ins yet"),
-        (f"{s['two_plus_recent']:.0%}", "of recent check-ins report two or more strains"),
+    short = {"Home repair help": "Home repair", "Help with bills": "Bills", "Someone to talk to": "Someone to talk to",
+             "Childcare": "Childcare", "Rides": "Rides", "Neighborhood events": "Events"}
+    tiles = [
+        ("Check-ins so far", f"{s['n']:,}", f"{s['weeks']} weeks, {s['hoods']} neighborhoods"),
+        ("Lowest-connected area", s["lowest"] or "—", f"score {s['lowest_score']:.0f} of 100" if s["lowest"] else ""),
+        ("Residents with 2+ strains", f"{s['two_plus_recent']:.0%}", "latest 4 weeks"),
+        ("Most requested help", short.get(s["top_need"], s["top_need"] or "—"),
+         f"{s['top_need_share']:.0%} of check-ins" if s["top_need"] else ""),
     ]
-    for col, (value, label) in zip(c, stats):
-        col.markdown(f'<div class="tc-stat">{value}</div><div class="tc-stat-label">{label}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="rp-metrics">' + "".join(
+        f'<div class="rp-metric"><div class="l">{html.escape(l)}</div><div class="v">{html.escape(v)}</div>'
+        f'<div class="s">{html.escape(sub)}</div></div>' for l, v, sub in tiles) + "</div>", unsafe_allow_html=True)

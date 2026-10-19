@@ -280,9 +280,69 @@ BOLD_CSS = """
 _base_apply = apply
 
 
+# Always a white page, even when the viewer's computer is in dark mode or the
+# .streamlit/config.toml file is missing. Matches the HTML preview exactly.
+LIGHT_CSS = """
+<style>
+:root { color-scheme: light !important; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], section.main,
+[data-testid="stHeader"], [data-testid="stBottom"] { background-color: #ffffff !important; color: #1d1d1f !important; }
+[data-testid="stHeader"] { background: rgba(255,255,255,0.85) !important; }
+.stApp p, .stApp li, .stApp label, .stApp span, .stApp div[data-testid="stMarkdownContainer"] { color: inherit; }
+[data-testid="stMain"] p, [data-testid="stMain"] li, [data-testid="stMain"] label,
+[data-testid="stWidgetLabel"] *, [data-testid="stMarkdownContainer"] { color: #1d1d1f; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * { color: #5f6470 !important; }
+/* inputs, selects, radios: light */
+[data-baseweb="select"] > div, [data-baseweb="input"], [data-baseweb="base-input"], [data-baseweb="textarea"],
+input, textarea { background-color: #f5f6f9 !important; color: #1d1d1f !important; }
+[data-baseweb="popover"] ul, [data-baseweb="menu"] { background-color: #ffffff !important; color: #1d1d1f !important; }
+[role="radiogroup"] label, [data-testid="stCheckbox"] label { color: #1d1d1f !important; }
+[data-testid="stExpander"] details, [data-testid="stExpander"] summary { background: #ffffff !important; color: #1d1d1f !important; }
+[data-testid="stDataFrame"], [data-testid="stTable"] { background: #ffffff !important; }
+[data-testid="stAlert"] { color: #002868 !important; }
+/* cards always white */
+[data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .tc-card),
+[data-testid="stForm"] { background: #ffffff !important; }
+/* watermark: as faint as in the preview */
+[data-testid="stAppViewContainer"], [data-testid="stMain"], section.main {
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200' preserveAspectRatio='xMidYMid slice'%3E%3Cg opacity='0.05'%3E%3Crect width='100' height='200' fill='%23002868'/%3E%3Crect x='100' y='100' width='200' height='100' fill='%23BF0A30'/%3E%3C/g%3E%3Cpolygon fill='%23ffffff' fill-opacity='0.6' points='50,62 59,89 88,89 65,106 73,133 50,117 27,133 35,106 12,89 41,89'/%3E%3C/svg%3E") !important;
+}
+[data-testid="stMain"] [data-testid="stAppViewContainer"] { background-image: none !important; }
+/* metric tiles exactly as in the preview */
+[data-testid="stMetric"] { background: #e8edf7 !important; border-top: 4px solid #002868 !important; border-radius: 16px !important; }
+[data-testid="stColumn"]:nth-child(even) [data-testid="stMetric"] { background: #fbe9ed !important; border-top-color: #BF0A30 !important; }
+[data-testid="stMetricLabel"] p { color: #5f6470 !important; }
+[data-testid="stMetricValue"] div { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+[data-testid="stMetricDelta"] div { white-space: normal !important; }
+
+/* Home number tiles (same markup as the HTML preview) */
+.stApp .rp-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.stApp .rp-metric { background: #e8edf7; border-top: 4px solid #002868; border-radius: 16px; padding: 14px 16px; }
+.stApp .rp-metric:nth-child(even) { background: #fbe9ed; border-top-color: #BF0A30; }
+.stApp .rp-metric .l { color: #5f6470; font-size: 0.85rem; font-weight: 500; }
+.stApp .rp-metric .v { color: #002868; font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.stApp .rp-metric:nth-child(even) .v { color: #BF0A30; }
+.stApp .rp-metric .s { color: #5f6470; font-size: 0.78rem; }
+@media (max-width: 860px) { .stApp .rp-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Radio buttons and checkboxes: light, navy when chosen */
+[role="radiogroup"] label > div > div:first-child { background-color: #ffffff !important; border: 2px solid #9aa0ad !important; }
+[role="radiogroup"] label > div > div:first-child > div { background-color: transparent !important; }
+[role="radiogroup"] label:has(input:checked) > div > div:first-child { background-color: #002868 !important; border-color: #002868 !important; }
+[role="radiogroup"] label:has(input:checked) > div > div:first-child > div { background-color: #ffffff !important; }
+[data-baseweb="checkbox"] > span:first-child { background-color: #ffffff !important; border-color: #9aa0ad !important; }
+[data-baseweb="checkbox"]:has(input:checked) > span:first-child { background-color: #002868 !important; border-color: #002868 !important; }
+[data-baseweb="select"] > div { border-color: rgba(0,20,60,0.12) !important; }
+[data-baseweb="select"] svg, [data-baseweb="select"] div { color: #1d1d1f !important; fill: #5f6470; }
+[data-baseweb="tag"] { background-color: #fbe9ed !important; color: #BF0A30 !important; }
+</style>
+"""
+
+
 def apply() -> None:  # noqa: F811 - extends the base style
     _base_apply()
     st.markdown(BOLD_CSS, unsafe_allow_html=True)
+    st.markdown(LIGHT_CSS, unsafe_allow_html=True)
 
 
 def page_header(eyebrow: str, title: str, subtitle: str = "") -> None:  # noqa: F811 - banner version
