@@ -335,6 +335,8 @@ input, textarea { background-color: #f5f6f9 !important; color: #1d1d1f !importan
 [data-baseweb="select"] > div { border-color: rgba(0,20,60,0.12) !important; }
 [data-baseweb="select"] svg, [data-baseweb="select"] div { color: #1d1d1f !important; fill: #5f6470; }
 [data-baseweb="tag"] { background-color: #fbe9ed !important; color: #BF0A30 !important; }
+[data-baseweb="select"] > div, [data-baseweb="select"] > div > div { background-color: #f5f6f9 !important; }
+[data-baseweb="select"] [role="presentation"], [data-baseweb="select"] svg { background-color: transparent !important; color: #5f6470 !important; fill: #5f6470 !important; }
 </style>
 """
 

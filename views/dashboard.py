@@ -8,8 +8,11 @@ from pulse.survey import STRESSOR_FLAGS, STRESSOR_LABELS
 from views.common import DATA, DATA_DARK, DATA_RAMP, GREY, sample_banner, scored, setting
 from views.style import page_header, section
 
-BASE = dict(paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", font=dict(color="#1d1d1f"),
-            margin=dict(l=10, r=20, t=10, b=10), hoverlabel=dict(bgcolor="white"))
+INK, MUTED, GRID = "#1d1d1f", "#5f6470", "rgba(0,20,60,0.08)"
+BASE = dict(paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
+            font=dict(color=INK, family="-apple-system, BlinkMacSystemFont, Inter, Helvetica Neue, Arial, sans-serif", size=13),
+            legend=dict(font=dict(color=INK, size=13)),
+            margin=dict(l=70, r=30, t=30, b=70), hoverlabel=dict(bgcolor="white"))
 CONFIG = {"displayModeBar": False}
 
 
@@ -42,14 +45,14 @@ def render():
     default = choices[-1] if choices else None
     pick = st.selectbox("Compare a neighborhood with the whole community", choices,
                         index=choices.index(default) if default else None) if choices else None
-    st.plotly_chart(trend_chart(df, pick), use_container_width=True, config=CONFIG)
+    st.plotly_chart(trend_chart(df, pick), use_container_width=True, theme=None, config=CONFIG)
     st.caption("The neighborhood line is a 3-week rolling average with its 90% range shaded, so small neighborhoods "
                f"reach the {scoring.MIN_GROUP}-check-in privacy minimum.")
 
     # ---------------- neighborhoods
     section("Neighborhoods")
     st.caption("Latest four weeks. Whiskers show the 90% range the true average likely falls in.")
-    st.plotly_chart(hood_chart(table), use_container_width=True, config=CONFIG)
+    st.plotly_chart(hood_chart(table), use_container_width=True, theme=None, config=CONFIG)
     hidden = table[table["hidden"]]["neighborhood"].tolist()
     if hidden:
         st.caption(f"Hidden (fewer than {scoring.MIN_GROUP} check-ins): {', '.join(hidden)}. "
@@ -63,12 +66,12 @@ def render():
         stack = scoring.strain_stack(rec)
         labels = [f"{i} strain" + ("" if i == 1 else "s") for i in stack.index]
         st.plotly_chart(bar_chart(labels, stack.values, [DATA_RAMP[min(i + 1, 5)] for i in range(len(stack))]),
-                        use_container_width=True, config=CONFIG)
+                        use_container_width=True, theme=None, config=CONFIG)
     with right:
         section("What would help")
         st.caption("Share of recent check-ins asking for each kind of help.")
         needs = scoring.needs_ranking(rec)
-        st.plotly_chart(bar_chart(needs.index.tolist(), needs.values, DATA), use_container_width=True, config=CONFIG)
+        st.plotly_chart(bar_chart(needs.index.tolist(), needs.values, DATA), use_container_width=True, theme=None, config=CONFIG)
 
     # ---------------- strains by neighborhood
     section("Strains by neighborhood")
@@ -99,6 +102,13 @@ check-ins is hidden. The score describes groups, never individuals, and is not a
 """)
 
 
+def style_axes(fig):
+    """Dark tick labels and titles on every axis, whatever the viewer's theme."""
+    fig.update_xaxes(tickfont_color=MUTED, title_font_color=MUTED, linecolor=GRID, zerolinecolor=GRID, automargin=True)
+    fig.update_yaxes(tickfont_color=INK, title_font_color=MUTED, linecolor=GRID, zerolinecolor=GRID, automargin=True)
+    return fig
+
+
 def trend_chart(df, pick):
     fig = go.Figure()
     all_t = scoring.weekly_trend(df)
@@ -113,10 +123,11 @@ def trend_chart(df, pick):
         fig.add_trace(go.Scatter(x=t["week"], y=t["mean"], name=pick, mode="lines+markers",
                                  line=dict(color=DATA_DARK, width=3), marker=dict(size=7),
                                  hovertemplate="Week %{x}: %{y:.0f}<extra>" + pick + "</extra>"))
-    fig.update_layout(**BASE, height=340, legend=dict(orientation="h", y=1.08, x=0),
+    fig.update_layout(**{k: v for k, v in BASE.items() if k != "legend"}, height=380,
+                      legend=dict(orientation="h", y=1.1, x=0, font=dict(color=INK, size=13)),
                       xaxis=dict(title="Weeks since the disaster", dtick=1, showgrid=False, tickfont=dict(size=12)),
                       yaxis=dict(range=[0, 100], gridcolor="rgba(0,20,60,0.08)", title="Connection score"))
-    return fig
+    return style_axes(fig)
 
 
 def hood_chart(table):
@@ -132,7 +143,7 @@ def hood_chart(table):
     fig.update_layout(**BASE, height=60 + 44 * len(shown), bargap=0.4,
                       xaxis=dict(range=[0, 105], gridcolor="rgba(0,20,60,0.08)", title="Connection score"),
                       yaxis=dict(showgrid=False, tickfont=dict(size=13)))
-    return fig
+    return style_axes(fig)
 
 
 def bar_chart(labels, values, color):
@@ -142,4 +153,4 @@ def bar_chart(labels, values, color):
     fig.update_layout(**BASE, height=60 + 40 * len(labels), bargap=0.35,
                       xaxis=dict(visible=False, range=[0, max(values) * 1.25 if len(values) else 1]),
                       yaxis=dict(autorange="reversed", showgrid=False, tickfont=dict(size=13)))
-    return fig
+    return style_axes(fig)
